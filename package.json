@@ -11,6 +11,7 @@
   "author": "Rebecca Richards <rrichards@earnestresearch.com>",
   "license": "ISC",
   "dependencies": {
+    "@octokit/core": "5.1.0",
     "@trycourier/courier": "^6.1.0",
     "dotenv": "^16.4.5"
   },
