@@ -41,43 +41,43 @@ test('Squarespace scraper', async ({ page }) => {
         'X-GitHub-Api-Version': '2022-11-28'
       }
     })
-  } catch (e) {
-    throw new Error(e)
-  }
 
-  const results = gist.data.files[GIST_NAME].content
-  console.log('Comparing against previous results', results)
+    const results = gist.data.files[GIST_NAME].content
 
-  if (JSON.stringify(jobs) !== JSON.stringify(results)) {
-    const { requestId } = await courier.send({
-      message: {
-        to: {
-          email: 'rebeccarich1@gmail.com'
-        },
-        template: '6XA45NXXD1MHJRGMKC6J3J5XNE63',
-        data: { jobs, company: 'Squarespace' }
-      }
-    })
-    console.log('New Squarespace jobs found 🚀 Courier notification requested:', requestId)
-    console.log('⚙️ Updating result set for next run...')
-    try {
-      await octokit.request(`PATCH /gists/${GIST_ID}`, {
-        gist_id: GIST_ID,
-        files: {
-          [GIST_NAME]: {
-            content: JSON.stringify(jobs)
-          }
-        },
-        headers: {
-          'X-GitHub-Api-Version': '2022-11-28'
+    if (JSON.stringify(jobs) !== JSON.stringify(results)) {
+      const { requestId } = await courier.send({
+        message: {
+          to: {
+            email: 'rebeccarich1@gmail.com'
+          },
+          template: '6XA45NXXD1MHJRGMKC6J3J5XNE63',
+          data: { jobs, company: 'Squarespace' }
         }
       })
-      console.log('Updated!')
-    } catch (e) {
-      throw new Error(e)
+      console.log('New Squarespace jobs found 🚀 Courier notification requested:', requestId)
+      console.log('⚙️ Updating result set for next run...')
+
+      try {
+        await octokit.request(`PATCH /gists/${GIST_ID}`, {
+          gist_id: GIST_ID,
+          files: {
+            [GIST_NAME]: {
+              content: JSON.stringify(jobs)
+            }
+          },
+          headers: {
+            'X-GitHub-Api-Version': '2022-11-28'
+          }
+        })
+        console.log('Updated!')
+      } catch (e) {
+        throw new Error(e)
+      }
+    } else {
+      console.log('No new Squarespace jobs found 😞')
     }
-  } else {
-    console.log('No new Squarespace jobs found 😞')
+  } catch (e) {
+    throw new Error(e)
   }
 
   await expect(page).toHaveTitle(/Engineering Careers – Squarespace/)
