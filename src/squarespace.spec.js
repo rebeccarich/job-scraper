@@ -44,7 +44,7 @@ test('Squarespace scraper', async ({ page }) => {
 
     const results = gist.data.files[GIST_NAME].content
 
-    if (JSON.stringify(jobs) !== JSON.stringify(results)) {
+    if (JSON.stringify(jobs) !== results) {
       const { requestId } = await courier.send({
         message: {
           to: {
