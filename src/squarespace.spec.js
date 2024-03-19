@@ -1,3 +1,4 @@
+require('dotenv').config()
 const { test, expect } = require('@playwright/test')
 import { CourierClient } from '@trycourier/courier'
 import fs from 'fs'
