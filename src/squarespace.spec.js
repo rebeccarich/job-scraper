@@ -75,6 +75,65 @@ test('Squarespace scraper', async ({ page }) => {
   await expect(page).toHaveTitle(/Engineering Careers – Squarespace/)
 })
 
+test('Stripe scraper', async ({ page }) => {
+  const COMPANY_NAME = 'Stripe'
+  const GIST_ID = '23e37606814d6aafb0ea550797eeda84'
+  const GIST_NAME = 'stripe.json'
+  const URL_TO_SCRAPE =
+    'https://stripe.com/jobs/search?query=frontend&office_locations=Europe--Dublin'
+  const SELECTOR = 'a.JobsListings__link'
+
+  await page.goto(URL_TO_SCRAPE)
+
+  const jobs = await page.$$eval(SELECTOR, (jobs) => {
+    const data = []
+    jobs.forEach((j) => {
+      const title = j.innerHTML
+      const href = j.href
+      data.push({ title, href })
+    })
+    return data
+  })
+
+  let gist
+
+  try {
+    console.log('Reading previous jobs data...')
+    gist = await readGist(GIST_ID)
+  } catch (e) {
+    console.error(e)
+    process.exit()
+  }
+
+  if (JSON.stringify(jobs) !== gist.data.files[GIST_NAME].content) {
+    try {
+      const { requestId } = await sendNotification(
+        EMAIL_TO,
+        COURIER_TEMPLATE_ID,
+        COMPANY_NAME,
+        jobs
+      )
+      console.log(`New ${COMPANY_NAME} jobs found 🚀 Courier notification requested:`, requestId)
+    } catch (e) {
+      console.error('Error sending notification', e)
+      process.exit()
+    }
+
+    try {
+      console.log('⚙️ Updating result set for next run...')
+      await updateGist(GIST_ID, GIST_NAME, jobs)
+      console.log('Updated!')
+    } catch (e) {
+      console.error(e)
+      process.exit()
+    }
+  } else {
+    console.log(`No new ${COMPANY_NAME} jobs found 😞`)
+  }
+
+  await expect(page).toHaveTitle(/Stripe Jobs/)
+})
+
 async function readGist(id) {
   return await octokit.request(`GET /gists/${id}`, {
     gist_id: id,
