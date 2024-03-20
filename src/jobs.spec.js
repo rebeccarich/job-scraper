@@ -13,11 +13,11 @@ const octokit = new Octokit({
 
 const COURIER_TEMPLATE_ID = '6XA45NXXD1MHJRGMKC6J3J5XNE63'
 const EMAIL_TO = 'rebeccarich1@gmail.com'
+const GIST_ID = '939866703c9699afe2c7806158345912'
 
 test('Squarespace scraper', async ({ page }) => {
   const COMPANY_NAME = 'Squarespace'
-  const GIST_ID = '939866703c9699afe2c7806158345912'
-  const GIST_NAME = 'squarespace.json'
+  const GIST_FILE_NAME = 'squarespace.json'
   const URL_TO_SCRAPE = 'https://www.squarespace.com/careers/engineering?location=dublin'
   const SELECTOR = '#careers-engineering .careers-list--jobs .careers-list__items a'
 
@@ -30,7 +30,7 @@ test('Squarespace scraper', async ({ page }) => {
       const location = j.querySelector('.careers-list__item__locations')?.innerHTML
       const href = j.href
       if (location === 'Dublin, IE') {
-        data.push({ title, location, href })
+        data.push({ title, href })
       }
     })
     return data
@@ -46,7 +46,7 @@ test('Squarespace scraper', async ({ page }) => {
     process.exit()
   }
 
-  if (JSON.stringify(jobs) !== gist.data.files[GIST_NAME].content) {
+  if (JSON.stringify(jobs) !== gist.data.files[GIST_FILE_NAME].content) {
     try {
       const { requestId } = await sendNotification(
         EMAIL_TO,
@@ -62,7 +62,7 @@ test('Squarespace scraper', async ({ page }) => {
 
     try {
       console.log('⚙️ Updating result set for next run...')
-      await updateGist(GIST_ID, GIST_NAME, jobs)
+      await updateGist(GIST_ID, GIST_FILE_NAME, jobs)
       console.log('Updated!')
     } catch (e) {
       console.error(e)
@@ -77,8 +77,7 @@ test('Squarespace scraper', async ({ page }) => {
 
 test('Stripe scraper', async ({ page }) => {
   const COMPANY_NAME = 'Stripe'
-  const GIST_ID = '23e37606814d6aafb0ea550797eeda84'
-  const GIST_NAME = 'stripe.json'
+  const GIST_FILE_NAME = 'stripe.json'
   const URL_TO_SCRAPE =
     'https://stripe.com/jobs/search?query=frontend&office_locations=Europe--Dublin'
   const SELECTOR = 'a.JobsListings__link'
@@ -105,7 +104,7 @@ test('Stripe scraper', async ({ page }) => {
     process.exit()
   }
 
-  if (JSON.stringify(jobs) !== gist.data.files[GIST_NAME].content) {
+  if (JSON.stringify(jobs) !== gist.data.files[GIST_FILE_NAME].content) {
     try {
       const { requestId } = await sendNotification(
         EMAIL_TO,
@@ -121,7 +120,7 @@ test('Stripe scraper', async ({ page }) => {
 
     try {
       console.log('⚙️ Updating result set for next run...')
-      await updateGist(GIST_ID, GIST_NAME, jobs)
+      await updateGist(GIST_ID, GIST_FILE_NAME, jobs)
       console.log('Updated!')
     } catch (e) {
       console.error(e)
@@ -132,6 +131,66 @@ test('Stripe scraper', async ({ page }) => {
   }
 
   await expect(page).toHaveTitle(/Stripe Jobs/)
+})
+
+test('OpenAI scraper', async ({ page }) => {
+  const COMPANY_NAME = 'OpenAI'
+  const GIST_FILE_NAME = 'openai.json'
+  const URL_TO_SCRAPE = 'https://openai.com/careers/search'
+  const SELECTOR = 'ul[aria-label="All teams roles"] a.ui-link.relative.group.inline-block'
+
+  await page.goto(URL_TO_SCRAPE)
+
+  const jobs = await page.$$eval(SELECTOR, (jobs) => {
+    const data = []
+    jobs.forEach((j) => {
+      const title = j.querySelector('h3')?.innerHTML
+      const location = j.querySelector('span')?.innerText
+      const href = j.href
+      if (location?.includes('Dublin, Ireland')) {
+        data.push({ title, href })
+      }
+    })
+    return data
+  })
+
+  let gist
+
+  try {
+    console.log('Reading previous jobs data...')
+    gist = await readGist(GIST_ID)
+  } catch (e) {
+    console.error(e)
+    process.exit()
+  }
+
+  if (JSON.stringify(jobs) !== gist.data.files[GIST_FILE_NAME].content) {
+    try {
+      const { requestId } = await sendNotification(
+        EMAIL_TO,
+        COURIER_TEMPLATE_ID,
+        COMPANY_NAME,
+        jobs
+      )
+      console.log(`New ${COMPANY_NAME} jobs found 🚀 Courier notification requested:`, requestId)
+    } catch (e) {
+      console.error('Error sending notification', e)
+      process.exit()
+    }
+
+    try {
+      console.log('⚙️ Updating result set for next run...')
+      await updateGist(GIST_ID, GIST_FILE_NAME, jobs)
+      console.log('Updated!')
+    } catch (e) {
+      console.error(e)
+      process.exit()
+    }
+  } else {
+    console.log(`No new ${COMPANY_NAME} jobs found 😞`)
+  }
+
+  await expect(page).toHaveTitle(/Careers at OpenAI/)
 })
 
 async function readGist(id) {
