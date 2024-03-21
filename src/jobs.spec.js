@@ -2,6 +2,7 @@ require('dotenv').config()
 const { test, expect } = require('@playwright/test')
 import { CourierClient } from '@trycourier/courier'
 import { Octokit } from '@octokit/core'
+import diff from 'diff-arrays-of-objects'
 
 const courier = new CourierClient({
   authorizationToken: process.env.COURIER_AUTH_TOKEN
@@ -46,13 +47,16 @@ test('Squarespace scraper', async ({ page }) => {
     process.exit()
   }
 
-  if (JSON.stringify(jobs) !== gist.data.files[GIST_FILE_NAME].content) {
+  const oldJobs = gist.data.files[GIST_FILE_NAME].content
+
+  if (JSON.stringify(jobs) !== oldJobs) {
+    const detailedDiff = diffJobs(JSON.parse(oldJobs), jobs)
     try {
       const { requestId } = await sendNotification(
         EMAIL_TO,
         COURIER_TEMPLATE_ID,
         COMPANY_NAME,
-        jobs
+        detailedDiff
       )
       console.log(`New ${COMPANY_NAME} jobs found 🚀 Courier notification requested:`, requestId)
     } catch (e) {
@@ -104,13 +108,16 @@ test('Stripe scraper', async ({ page }) => {
     process.exit()
   }
 
-  if (JSON.stringify(jobs) !== gist.data.files[GIST_FILE_NAME].content) {
+  const oldJobs = gist.data.files[GIST_FILE_NAME].content
+
+  if (JSON.stringify(jobs) !== oldJobs) {
+    const detailedDiff = diffJobs(JSON.parse(oldJobs), jobs)
     try {
       const { requestId } = await sendNotification(
         EMAIL_TO,
         COURIER_TEMPLATE_ID,
         COMPANY_NAME,
-        jobs
+        detailedDiff
       )
       console.log(`New ${COMPANY_NAME} jobs found 🚀 Courier notification requested:`, requestId)
     } catch (e) {
@@ -164,13 +171,16 @@ test('OpenAI scraper', async ({ page }) => {
     process.exit()
   }
 
-  if (JSON.stringify(jobs) !== gist.data.files[GIST_FILE_NAME].content) {
+  const oldJobs = gist.data.files[GIST_FILE_NAME].content
+
+  if (JSON.stringify(jobs) !== oldJobs) {
+    const detailedDiff = diffJobs(JSON.parse(oldJobs), jobs)
     try {
       const { requestId } = await sendNotification(
         EMAIL_TO,
         COURIER_TEMPLATE_ID,
         COMPANY_NAME,
-        jobs
+        detailedDiff
       )
       console.log(`New ${COMPANY_NAME} jobs found 🚀 Courier notification requested:`, requestId)
     } catch (e) {
@@ -192,6 +202,10 @@ test('OpenAI scraper', async ({ page }) => {
 
   await expect(page).toHaveTitle(/Careers at OpenAI/)
 })
+
+function diffJobs(oldJobs, newJobs) {
+  return diff(oldJobs, newJobs, 'title')
+}
 
 async function readGist(id) {
   return await octokit.request(`GET /gists/${id}`, {
@@ -223,7 +237,13 @@ async function sendNotification(emailAddress, templateId, companyName, jobs) {
         email: emailAddress
       },
       template: templateId,
-      data: { jobs, company: companyName }
+      data: {
+        ...(!!jobs.added?.length && { added: jobs.added }),
+        ...(!!jobs.removed?.length && { removed: jobs.removed }),
+        ...(!!jobs.updated?.length && { updated: jobs.updated }),
+        ...(!!jobs.same?.length && { same: jobs.same }),
+        company: companyName
+      }
     }
   })
 }

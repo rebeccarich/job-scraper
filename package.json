@@ -13,6 +13,7 @@
   "dependencies": {
     "@octokit/core": "5.1.0",
     "@trycourier/courier": "^6.1.0",
+    "diff-arrays-of-objects": "^1.1.9",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
