@@ -203,6 +203,130 @@ test('OpenAI scraper', async ({ page }) => {
   await expect(page).toHaveTitle(/Careers at OpenAI/)
 })
 
+test('Pinterest scraper', async ({ page }) => {
+  const COMPANY_NAME = 'Pinterest'
+  const GIST_FILE_NAME = 'pinterest.json'
+  const URL_TO_SCRAPE =
+    'https://www.pinterestcareers.com/en/jobs/?search=&team=Engineering&location=Dublin&pagesize=200'
+  const SELECTOR = '#results .js-view-job'
+
+  await page.goto(URL_TO_SCRAPE)
+
+  const jobs = await page.$$eval(SELECTOR, (jobs) => {
+    const data = []
+    jobs.forEach((j) => {
+      const title = j.innerText
+      const href = j.href
+      data.push({ title, href })
+    })
+    return data
+  })
+
+  let gist
+
+  try {
+    console.log('Reading previous jobs data...')
+    gist = await readGist(GIST_ID)
+  } catch (e) {
+    console.error(e)
+    process.exit()
+  }
+
+  const oldJobs = gist.data.files[GIST_FILE_NAME].content
+
+  if (JSON.stringify(jobs) !== oldJobs) {
+    const detailedDiff = diffJobs(JSON.parse(oldJobs), jobs)
+    try {
+      const { requestId } = await sendNotification(
+        EMAIL_TO,
+        COURIER_TEMPLATE_ID,
+        COMPANY_NAME,
+        detailedDiff
+      )
+      console.log(`New ${COMPANY_NAME} jobs found 🚀 Courier notification requested:`, requestId)
+    } catch (e) {
+      console.error('Error sending notification', e)
+      process.exit()
+    }
+
+    try {
+      console.log('⚙️ Updating result set for next run...')
+      await updateGist(GIST_ID, GIST_FILE_NAME, jobs)
+      console.log('Updated!')
+    } catch (e) {
+      console.error(e)
+      process.exit()
+    }
+  } else {
+    console.log(`No new ${COMPANY_NAME} jobs found 😞`)
+  }
+
+  await expect(page).toHaveTitle(/Discover opportunities at Pinterest | Pinterest Careers/)
+})
+
+test('Reddit scraper', async ({ page }) => {
+  const COMPANY_NAME = 'Reddit'
+  const GIST_FILE_NAME = 'reddit.json'
+  const URL_TO_SCRAPE = 'https://boards.greenhouse.io/reddit'
+  const SELECTOR = '.opening'
+
+  await page.goto(URL_TO_SCRAPE)
+
+  const jobs = await page.$$eval(SELECTOR, (jobs) => {
+    const data = []
+    jobs.forEach((j) => {
+      const location = j.querySelector('span').innerText
+      const href = j.querySelector('a').href
+      const title = j.querySelector('a').innerText
+      if (location === 'Dublin, Ireland') {
+        data.push({ title, href })
+      }
+    })
+    return data
+  })
+
+  let gist
+
+  try {
+    console.log('Reading previous jobs data...')
+    gist = await readGist(GIST_ID)
+  } catch (e) {
+    console.error(e)
+    process.exit()
+  }
+
+  const oldJobs = gist.data.files[GIST_FILE_NAME].content
+
+  if (JSON.stringify(jobs) !== oldJobs) {
+    const detailedDiff = diffJobs(JSON.parse(oldJobs), jobs)
+    try {
+      const { requestId } = await sendNotification(
+        EMAIL_TO,
+        COURIER_TEMPLATE_ID,
+        COMPANY_NAME,
+        detailedDiff
+      )
+      console.log(`New ${COMPANY_NAME} jobs found 🚀 Courier notification requested:`, requestId)
+    } catch (e) {
+      console.error('Error sending notification', e)
+      process.exit()
+    }
+
+    try {
+      console.log('⚙️ Updating result set for next run...')
+      await updateGist(GIST_ID, GIST_FILE_NAME, jobs)
+      console.log('Updated!')
+    } catch (e) {
+      console.error(e)
+      process.exit()
+    }
+  } else {
+    console.log(`No new ${COMPANY_NAME} jobs found 😞`)
+  }
+
+  await expect(page).toHaveTitle(/Jobs at Reddit/)
+})
+
 function diffJobs(oldJobs, newJobs) {
   return diff(oldJobs, newJobs, 'title')
 }
