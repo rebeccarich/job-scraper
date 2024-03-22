@@ -16,6 +16,45 @@ const COURIER_TEMPLATE_ID = '6XA45NXXD1MHJRGMKC6J3J5XNE63'
 const EMAIL_TO = 'rebeccarich1@gmail.com'
 const GIST_ID = '939866703c9699afe2c7806158345912'
 
+let gist
+const companiesToUpdate = []
+
+test.beforeAll('Load Previous Jobs Data', async () => {
+  try {
+    console.log('Reading previous jobs data')
+    gist = await readGist(GIST_ID)
+  } catch (e) {
+    console.error(e)
+    process.exit()
+  }
+})
+
+test.afterAll('Send Notifications & Update Jobs Data', async () => {
+  for (const company of companiesToUpdate) {
+    try {
+      const { requestId } = await sendNotification(
+        EMAIL_TO,
+        COURIER_TEMPLATE_ID,
+        company.name,
+        company.detailedDiff
+      )
+      console.log(`New ${company.name} jobs found 🚀 Courier notification requested:`, requestId)
+    } catch (e) {
+      console.error('Error sending notification', e)
+      process.exit()
+    }
+
+    try {
+      console.log('⚙️ Updating result set for next run...')
+      await updateGist(GIST_ID, company.fileName, company.updatedJobs)
+      console.log('Updated!')
+    } catch (e) {
+      console.error(e)
+      process.exit()
+    }
+  }
+})
+
 test('Squarespace scraper', async ({ page }) => {
   const COMPANY_NAME = 'Squarespace'
   const GIST_FILE_NAME = 'squarespace.json'
@@ -37,41 +76,15 @@ test('Squarespace scraper', async ({ page }) => {
     return data
   })
 
-  let gist
-
-  try {
-    console.log('Reading previous jobs data...')
-    gist = await readGist(GIST_ID)
-  } catch (e) {
-    console.error(e)
-    process.exit()
-  }
-
   const oldJobs = gist.data.files[GIST_FILE_NAME].content
 
   if (JSON.stringify(jobs) !== oldJobs) {
-    const detailedDiff = diffJobs(JSON.parse(oldJobs), jobs)
-    try {
-      const { requestId } = await sendNotification(
-        EMAIL_TO,
-        COURIER_TEMPLATE_ID,
-        COMPANY_NAME,
-        detailedDiff
-      )
-      console.log(`New ${COMPANY_NAME} jobs found 🚀 Courier notification requested:`, requestId)
-    } catch (e) {
-      console.error('Error sending notification', e)
-      process.exit()
-    }
-
-    try {
-      console.log('⚙️ Updating result set for next run...')
-      await updateGist(GIST_ID, GIST_FILE_NAME, jobs)
-      console.log('Updated!')
-    } catch (e) {
-      console.error(e)
-      process.exit()
-    }
+    companiesToUpdate.push({
+      name: COMPANY_NAME,
+      detailedDiff: diffJobs(JSON.parse(oldJobs), jobs),
+      fileName: GIST_FILE_NAME,
+      updatedJobs: jobs
+    })
   } else {
     console.log(`No new ${COMPANY_NAME} jobs found 😞`)
   }
@@ -98,41 +111,15 @@ test('Stripe scraper', async ({ page }) => {
     return data
   })
 
-  let gist
-
-  try {
-    console.log('Reading previous jobs data...')
-    gist = await readGist(GIST_ID)
-  } catch (e) {
-    console.error(e)
-    process.exit()
-  }
-
   const oldJobs = gist.data.files[GIST_FILE_NAME].content
 
   if (JSON.stringify(jobs) !== oldJobs) {
-    const detailedDiff = diffJobs(JSON.parse(oldJobs), jobs)
-    try {
-      const { requestId } = await sendNotification(
-        EMAIL_TO,
-        COURIER_TEMPLATE_ID,
-        COMPANY_NAME,
-        detailedDiff
-      )
-      console.log(`New ${COMPANY_NAME} jobs found 🚀 Courier notification requested:`, requestId)
-    } catch (e) {
-      console.error('Error sending notification', e)
-      process.exit()
-    }
-
-    try {
-      console.log('⚙️ Updating result set for next run...')
-      await updateGist(GIST_ID, GIST_FILE_NAME, jobs)
-      console.log('Updated!')
-    } catch (e) {
-      console.error(e)
-      process.exit()
-    }
+    companiesToUpdate.push({
+      name: COMPANY_NAME,
+      detailedDiff: diffJobs(JSON.parse(oldJobs), jobs),
+      fileName: GIST_FILE_NAME,
+      updatedJobs: jobs
+    })
   } else {
     console.log(`No new ${COMPANY_NAME} jobs found 😞`)
   }
@@ -161,41 +148,15 @@ test('OpenAI scraper', async ({ page }) => {
     return data
   })
 
-  let gist
-
-  try {
-    console.log('Reading previous jobs data...')
-    gist = await readGist(GIST_ID)
-  } catch (e) {
-    console.error(e)
-    process.exit()
-  }
-
   const oldJobs = gist.data.files[GIST_FILE_NAME].content
 
   if (JSON.stringify(jobs) !== oldJobs) {
-    const detailedDiff = diffJobs(JSON.parse(oldJobs), jobs)
-    try {
-      const { requestId } = await sendNotification(
-        EMAIL_TO,
-        COURIER_TEMPLATE_ID,
-        COMPANY_NAME,
-        detailedDiff
-      )
-      console.log(`New ${COMPANY_NAME} jobs found 🚀 Courier notification requested:`, requestId)
-    } catch (e) {
-      console.error('Error sending notification', e)
-      process.exit()
-    }
-
-    try {
-      console.log('⚙️ Updating result set for next run...')
-      await updateGist(GIST_ID, GIST_FILE_NAME, jobs)
-      console.log('Updated!')
-    } catch (e) {
-      console.error(e)
-      process.exit()
-    }
+    companiesToUpdate.push({
+      name: COMPANY_NAME,
+      detailedDiff: diffJobs(JSON.parse(oldJobs), jobs),
+      fileName: GIST_FILE_NAME,
+      updatedJobs: jobs
+    })
   } else {
     console.log(`No new ${COMPANY_NAME} jobs found 😞`)
   }
@@ -222,41 +183,15 @@ test('Pinterest scraper', async ({ page }) => {
     return data
   })
 
-  let gist
-
-  try {
-    console.log('Reading previous jobs data...')
-    gist = await readGist(GIST_ID)
-  } catch (e) {
-    console.error(e)
-    process.exit()
-  }
-
   const oldJobs = gist.data.files[GIST_FILE_NAME].content
 
   if (JSON.stringify(jobs) !== oldJobs) {
-    const detailedDiff = diffJobs(JSON.parse(oldJobs), jobs)
-    try {
-      const { requestId } = await sendNotification(
-        EMAIL_TO,
-        COURIER_TEMPLATE_ID,
-        COMPANY_NAME,
-        detailedDiff
-      )
-      console.log(`New ${COMPANY_NAME} jobs found 🚀 Courier notification requested:`, requestId)
-    } catch (e) {
-      console.error('Error sending notification', e)
-      process.exit()
-    }
-
-    try {
-      console.log('⚙️ Updating result set for next run...')
-      await updateGist(GIST_ID, GIST_FILE_NAME, jobs)
-      console.log('Updated!')
-    } catch (e) {
-      console.error(e)
-      process.exit()
-    }
+    companiesToUpdate.push({
+      name: COMPANY_NAME,
+      detailedDiff: diffJobs(JSON.parse(oldJobs), jobs),
+      fileName: GIST_FILE_NAME,
+      updatedJobs: jobs
+    })
   } else {
     console.log(`No new ${COMPANY_NAME} jobs found 😞`)
   }
@@ -285,41 +220,15 @@ test('Reddit scraper', async ({ page }) => {
     return data
   })
 
-  let gist
-
-  try {
-    console.log('Reading previous jobs data...')
-    gist = await readGist(GIST_ID)
-  } catch (e) {
-    console.error(e)
-    process.exit()
-  }
-
   const oldJobs = gist.data.files[GIST_FILE_NAME].content
 
   if (JSON.stringify(jobs) !== oldJobs) {
-    const detailedDiff = diffJobs(JSON.parse(oldJobs), jobs)
-    try {
-      const { requestId } = await sendNotification(
-        EMAIL_TO,
-        COURIER_TEMPLATE_ID,
-        COMPANY_NAME,
-        detailedDiff
-      )
-      console.log(`New ${COMPANY_NAME} jobs found 🚀 Courier notification requested:`, requestId)
-    } catch (e) {
-      console.error('Error sending notification', e)
-      process.exit()
-    }
-
-    try {
-      console.log('⚙️ Updating result set for next run...')
-      await updateGist(GIST_ID, GIST_FILE_NAME, jobs)
-      console.log('Updated!')
-    } catch (e) {
-      console.error(e)
-      process.exit()
-    }
+    companiesToUpdate.push({
+      name: COMPANY_NAME,
+      detailedDiff: diffJobs(JSON.parse(oldJobs), jobs),
+      fileName: GIST_FILE_NAME,
+      updatedJobs: jobs
+    })
   } else {
     console.log(`No new ${COMPANY_NAME} jobs found 😞`)
   }
