@@ -22,6 +22,9 @@ jobs:
         env:
           COURIER_AUTH_TOKEN: ${{secrets.COURIER_AUTH_TOKEN}}
           GH_AUTH_TOKEN: ${{secrets.GH_AUTH_TOKEN}}
+          COURIER_TEMPLATE_ID: ${{vars.COURIER_TEMPLATE_ID}}
+          EMAIL_TO: ${{vars.EMAIL_TO}}
+          GIST_ID: ${{vars.GIST_ID}}
       - uses: actions/upload-artifact@v4
         if: always()
         with:

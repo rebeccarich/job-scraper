@@ -12,17 +12,13 @@ const octokit = new Octokit({
   auth: process.env.GH_AUTH_TOKEN
 })
 
-const COURIER_TEMPLATE_ID = '6XA45NXXD1MHJRGMKC6J3J5XNE63'
-const EMAIL_TO = 'rebeccarich1@gmail.com'
-const GIST_ID = '939866703c9699afe2c7806158345912'
-
 let gist
 const companiesToUpdate = []
 
 test.beforeAll('Load Previous Jobs Data', async () => {
   try {
     console.log('Reading previous jobs data')
-    gist = await readGist(GIST_ID)
+    gist = await readGist(process.env.GIST_ID)
   } catch (e) {
     console.error(e)
     process.exit()
@@ -33,8 +29,8 @@ test.afterAll('Send Notifications & Update Jobs Data', async () => {
   for (const company of companiesToUpdate) {
     try {
       const { requestId } = await sendNotification(
-        EMAIL_TO,
-        COURIER_TEMPLATE_ID,
+        process.env.EMAIL_TO,
+        process.env.COURIER_TEMPLATE_ID,
         company.name,
         company.detailedDiff
       )
@@ -46,7 +42,7 @@ test.afterAll('Send Notifications & Update Jobs Data', async () => {
 
     try {
       console.log('⚙️ Updating result set for next run...')
-      await updateGist(GIST_ID, company.fileName, company.updatedJobs)
+      await updateGist(process.env.GIST_ID, company.fileName, company.updatedJobs)
       console.log('Updated!')
     } catch (e) {
       console.error(e)
