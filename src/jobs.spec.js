@@ -292,10 +292,10 @@ async function sendNotification(emailAddress, templateId, companyName, jobs) {
       },
       template: templateId,
       data: {
-        ...(!!jobs.added?.length && { added: jobs.added }),
-        ...(!!jobs.removed?.length && { removed: jobs.removed }),
-        ...(!!jobs.updated?.length && { updated: jobs.updated }),
-        ...(!!jobs.same?.length && { same: jobs.same }),
+        added: jobs.added,
+        removed: jobs.removed,
+        updated: jobs.updated,
+        same: jobs.same,
         company: companyName
       }
     }
