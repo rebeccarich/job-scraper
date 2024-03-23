@@ -3,7 +3,7 @@ on:
   push:
     branches: [main]
   schedule:
-    - cron: "0 8 * * *"
+    - cron: '0 8 * * *'
 jobs:
   test:
     timeout-minutes: 60
@@ -23,8 +23,10 @@ jobs:
           COURIER_AUTH_TOKEN: ${{secrets.COURIER_AUTH_TOKEN}}
           GH_AUTH_TOKEN: ${{secrets.GH_AUTH_TOKEN}}
           COURIER_TEMPLATE_ID: ${{vars.COURIER_TEMPLATE_ID}}
+          COURIER_ROLLUP_TEMPLATE_ID: ${{vars.COURIER_ROLLUP_TEMPLATE_ID}}
           EMAIL_TO: ${{vars.EMAIL_TO}}
           GIST_ID: ${{vars.GIST_ID}}
+          ROLLUP: ${{vars.ROLLUP}}
       - uses: actions/upload-artifact@v4
         if: always()
         with:

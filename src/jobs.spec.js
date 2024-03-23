@@ -26,28 +26,51 @@ test.beforeAll('Load Previous Jobs Data', async () => {
 })
 
 test.afterAll('Send Notifications & Update Jobs Data', async () => {
-  for (const company of companiesToUpdate) {
+  if (!companiesToUpdate.length) {
+    return
+  }
+
+  if (process.env.ROLLUP === 'true') {
     try {
-      const { requestId } = await sendNotification(
+      const { requestId } = await sendNotificationRollup(
         process.env.EMAIL_TO,
-        process.env.COURIER_TEMPLATE_ID,
-        company.name,
-        company.detailedDiff
+        process.env.COURIER_ROLLUP_TEMPLATE_ID,
+        companiesToUpdate
       )
-      console.log(`New ${company.name} jobs found 🚀 Courier notification requested:`, requestId)
+      console.log(
+        `New ${companiesToUpdate
+          .map(({ name }) => name)
+          .join(', ')} jobs found 🚀 Courier notification requested:`,
+        requestId
+      )
     } catch (e) {
       console.error('Error sending notification', e)
       process.exit()
     }
-
-    try {
-      console.log('⚙️ Updating result set for next run...')
-      await updateGist(process.env.GIST_ID, company.fileName, company.updatedJobs)
-      console.log('Updated!')
-    } catch (e) {
-      console.error(e)
-      process.exit()
+  } else {
+    for (const company of companiesToUpdate) {
+      try {
+        const { requestId } = await sendNotification(
+          process.env.EMAIL_TO,
+          process.env.COURIER_TEMPLATE_ID,
+          company.name,
+          company.detailedDiff
+        )
+        console.log(`New ${company.name} jobs found 🚀 Courier notification requested:`, requestId)
+      } catch (e) {
+        console.error('Error sending notification', e)
+        process.exit()
+      }
     }
+  }
+
+  try {
+    console.log('⚙️ Updating result set for next run...')
+    await updateGist(process.env.GIST_ID, companiesToUpdate)
+    console.log('Updated!')
+  } catch (e) {
+    console.error(e)
+    process.exit()
   }
 })
 
@@ -245,14 +268,16 @@ async function readGist(id) {
   })
 }
 
-async function updateGist(id, fileName, newData) {
+async function updateGist(id, companiesToUpdate) {
+  const files = companiesToUpdate.reduce((acc, current) => {
+    acc[current.fileName] = {
+      content: JSON.stringify(current.updatedJobs)
+    }
+    return acc
+  }, {})
   return await octokit.request(`PATCH /gists/${id}`, {
     gist_id: id,
-    files: {
-      [fileName]: {
-        content: JSON.stringify(newData)
-      }
-    },
+    files,
     headers: {
       'X-GitHub-Api-Version': '2022-11-28'
     }
@@ -272,6 +297,20 @@ async function sendNotification(emailAddress, templateId, companyName, jobs) {
         ...(!!jobs.updated?.length && { updated: jobs.updated }),
         ...(!!jobs.same?.length && { same: jobs.same }),
         company: companyName
+      }
+    }
+  })
+}
+
+async function sendNotificationRollup(emailAddress, templateId, jobsByCompany) {
+  return await courier.send({
+    message: {
+      to: {
+        email: emailAddress
+      },
+      template: templateId,
+      data: {
+        jobsByCompany
       }
     }
   })
