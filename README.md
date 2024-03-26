@@ -11,7 +11,12 @@ Scrapes data from the following company's careers pages:
 | [OpenAI](https://www.openai.com/careers)           | ✅     |
 | [Pinterest](https://www.pinterestcareers.com/)     | ✅     |
 | [Reddit](https://www.redditinc.com/careers)        | ✅     |
+| [Strava](https://www.strava.com/careers)           | ✅     |
 | Anthropic                                          | 🚧     |
+| Notion                                             | 🚧     |
+| Datadog                                            | 🚧     |
+| Algolia                                            | 🚧     |
+| Etsy                                               | 🚧     |
 
 > [!IMPORTANT]
 > The data is filtered to only report jobs in the Dublin area since we don't care about jobs in other locations.

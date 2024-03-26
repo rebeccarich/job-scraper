@@ -255,6 +255,43 @@ test('Reddit scraper', async ({ page }) => {
   await expect(page).toHaveTitle(/Jobs at Reddit/)
 })
 
+test('Strava scraper', async ({ page }) => {
+  const COMPANY_NAME = 'Strava'
+  const GIST_FILE_NAME = 'strava.json'
+  const URL_TO_SCRAPE = 'https://boards.greenhouse.io/strava'
+  const SELECTOR = '.opening'
+
+  await page.goto(URL_TO_SCRAPE)
+
+  const jobs = await page.$$eval(SELECTOR, (jobs) => {
+    const data = []
+    jobs.forEach((j) => {
+      const location = j.querySelector('span').innerText
+      const href = j.querySelector('a').href
+      const title = j.querySelector('a').innerText
+      if (location === 'Dublin') {
+        data.push({ title, href })
+      }
+    })
+    return data
+  })
+
+  const oldJobs = gist.data.files[GIST_FILE_NAME].content
+
+  if (JSON.stringify(jobs) !== oldJobs) {
+    companiesToUpdate.push({
+      name: COMPANY_NAME,
+      detailedDiff: diffJobs(JSON.parse(oldJobs), jobs),
+      fileName: GIST_FILE_NAME,
+      updatedJobs: jobs
+    })
+  } else {
+    console.log(`No new ${COMPANY_NAME} jobs found 😞`)
+  }
+
+  await expect(page).toHaveTitle(/Jobs at Strava/)
+})
+
 function diffJobs(oldJobs, newJobs) {
   return diff(oldJobs, newJobs, 'title')
 }
