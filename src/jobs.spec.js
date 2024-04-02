@@ -78,7 +78,7 @@ test('Squarespace scraper', async ({ page }) => {
   const COMPANY_NAME = 'Squarespace'
   const GIST_FILE_NAME = 'squarespace.json'
   const URL_TO_SCRAPE = 'https://www.squarespace.com/careers/engineering?location=dublin'
-  const SELECTOR = '#careers-engineering .careers-list--jobs .careers-list__items a'
+  const SELECTOR = '#careers-engineering .careers-list--jobs .careers-list__items a >> visible=true'
 
   await page.goto(URL_TO_SCRAPE)
 
@@ -86,11 +86,8 @@ test('Squarespace scraper', async ({ page }) => {
     const data = []
     jobs.forEach((j) => {
       const title = j.querySelector('.careers-list__item__title')?.innerHTML
-      const location = j.querySelector('.careers-list__item__locations')?.innerHTML
       const href = j.href
-      if (location === 'Dublin, IE') {
-        data.push({ title, href })
-      }
+      data.push({ title, href })
     })
     return data
   })
