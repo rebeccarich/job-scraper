@@ -4,19 +4,19 @@
 
 Scrapes data from the following company's careers pages:
 
-| Company                                            | Status |
-| -------------------------------------------------- | ------ |
-| [Squarespace](https://www.squarespace.com/careers) | ✅     |
-| [Stripe](https://stripe.com/jobs)                  | ✅     |
-| [OpenAI](https://www.openai.com/careers)           | ✅     |
-| [Pinterest](https://www.pinterestcareers.com/)     | ✅     |
-| [Reddit](https://www.redditinc.com/careers)        | ✅     |
-| [Strava](https://www.strava.com/careers)           | ✅     |
-| Anthropic                                          | 🚧     |
-| [Notion](https://www.notion.so/careers)            | ✅     |
-| Datadog                                            | 🚧     |
-| Algolia                                            | 🚧     |
-| Etsy                                               | 🚧     |
+| Company                                                   | Status |
+| --------------------------------------------------------- | ------ |
+| [Squarespace](https://www.squarespace.com/careers)        | ✅     |
+| [Stripe](https://stripe.com/jobs)                         | ✅     |
+| [OpenAI](https://www.openai.com/careers)                  | ✅     |
+| [Pinterest](https://www.pinterestcareers.com/)            | ✅     |
+| [Reddit](https://www.redditinc.com/careers)               | ✅     |
+| [Strava](https://www.strava.com/careers)                  | ✅     |
+| Anthropic                                                 | 🚧     |
+| [Notion](https://www.notion.so/careers)                   | ✅     |
+| Datadog                                                   | 🚧     |
+| Algolia                                                   | 🚧     |
+| [Etsy](https://careers.etsy.com/jobs/search?query=dublin) | ✅     |
 
 > [!IMPORTANT]
 > The data is filtered to only report jobs in the Dublin area since we don't care about jobs in other locations.

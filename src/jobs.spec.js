@@ -327,3 +327,37 @@ test('Notion scraper', async ({ page }) => {
 
   await expect(page).toHaveTitle(/Careers at Notion | We're Hiring!/)
 })
+
+test('Etsy scraper', async ({ page }) => {
+  const COMPANY_NAME = 'Etsy'
+  const GIST_FILE_NAME = 'etsy.json'
+  const URL_TO_SCRAPE = 'https://careers.etsy.com/jobs/search?query=dublin'
+  const SELECTOR = '.job-search-results-card-body'
+
+  await page.goto(URL_TO_SCRAPE)
+
+  const jobs = await page.$$eval(SELECTOR, (jobs) => {
+    const data = []
+    jobs.forEach((j) => {
+      const href = j.querySelector('h3 a').href
+      const title = j.querySelector('h3 a').innerText
+      data.push({ title, href })
+    })
+    return data
+  })
+
+  const oldJobs = gist.data.files[GIST_FILE_NAME]?.content || JSON.stringify([])
+
+  if (JSON.stringify(jobs) !== oldJobs) {
+    companiesToUpdate.push({
+      name: COMPANY_NAME,
+      detailedDiff: diffJobs(JSON.parse(oldJobs), jobs),
+      fileName: GIST_FILE_NAME,
+      updatedJobs: jobs
+    })
+  } else {
+    console.log(`No new ${COMPANY_NAME} jobs found 😞`)
+  }
+
+  await expect(page).toHaveTitle(/Search Page/)
+})
