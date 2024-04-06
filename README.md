@@ -13,7 +13,7 @@ Scrapes data from the following company's careers pages:
 | [Reddit](https://www.redditinc.com/careers)        | ✅     |
 | [Strava](https://www.strava.com/careers)           | ✅     |
 | Anthropic                                          | 🚧     |
-| Notion                                             | 🚧     |
+| [Notion](https://www.notion.so/careers)            | ✅     |
 | Datadog                                            | 🚧     |
 | Algolia                                            | 🚧     |
 | Etsy                                               | 🚧     |

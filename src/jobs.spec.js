@@ -1,16 +1,12 @@
 require('dotenv').config()
 const { test, expect } = require('@playwright/test')
-import { CourierClient } from '@trycourier/courier'
-import { Octokit } from '@octokit/core'
-import diff from 'diff-arrays-of-objects'
-
-const courier = new CourierClient({
-  authorizationToken: process.env.COURIER_AUTH_TOKEN
-})
-
-const octokit = new Octokit({
-  auth: process.env.GH_AUTH_TOKEN
-})
+const {
+  diffJobs,
+  readGist,
+  updateGist,
+  sendNotificationRollup,
+  sendNotification
+} = require('./utils')
 
 let gist
 const companiesToUpdate = []
@@ -87,12 +83,15 @@ test('Squarespace scraper', async ({ page }) => {
     jobs.forEach((j) => {
       const title = j.querySelector('.careers-list__item__title')?.innerHTML
       const href = j.href
-      data.push({ title, href })
+      const location = j.querySelector('.careers-list__item__locations')?.innerHTML
+      if (location.toLowerCase() === 'dublin') {
+        data.push({ title, href })
+      }
     })
     return data
   })
 
-  const oldJobs = gist.data.files[GIST_FILE_NAME].content
+  const oldJobs = gist.data.files[GIST_FILE_NAME]?.content || JSON.stringify([])
 
   if (JSON.stringify(jobs) !== oldJobs) {
     companiesToUpdate.push({
@@ -127,7 +126,7 @@ test('Stripe scraper', async ({ page }) => {
     return data
   })
 
-  const oldJobs = gist.data.files[GIST_FILE_NAME].content
+  const oldJobs = gist.data.files[GIST_FILE_NAME]?.content || JSON.stringify([])
 
   if (JSON.stringify(jobs) !== oldJobs) {
     companiesToUpdate.push({
@@ -164,7 +163,7 @@ test('OpenAI scraper', async ({ page }) => {
     return data
   })
 
-  const oldJobs = gist.data.files[GIST_FILE_NAME].content
+  const oldJobs = gist.data.files[GIST_FILE_NAME]?.content || JSON.stringify([])
 
   if (JSON.stringify(jobs) !== oldJobs) {
     companiesToUpdate.push({
@@ -199,7 +198,7 @@ test('Pinterest scraper', async ({ page }) => {
     return data
   })
 
-  const oldJobs = gist.data.files[GIST_FILE_NAME].content
+  const oldJobs = gist.data.files[GIST_FILE_NAME]?.content || JSON.stringify([])
 
   if (JSON.stringify(jobs) !== oldJobs) {
     companiesToUpdate.push({
@@ -236,7 +235,7 @@ test('Reddit scraper', async ({ page }) => {
     return data
   })
 
-  const oldJobs = gist.data.files[GIST_FILE_NAME].content
+  const oldJobs = gist.data.files[GIST_FILE_NAME]?.content || JSON.stringify([])
 
   if (JSON.stringify(jobs) !== oldJobs) {
     companiesToUpdate.push({
@@ -273,7 +272,7 @@ test('Strava scraper', async ({ page }) => {
     return data
   })
 
-  const oldJobs = gist.data.files[GIST_FILE_NAME].content
+  const oldJobs = gist.data.files[GIST_FILE_NAME]?.content || JSON.stringify([])
 
   if (JSON.stringify(jobs) !== oldJobs) {
     companiesToUpdate.push({
@@ -289,63 +288,42 @@ test('Strava scraper', async ({ page }) => {
   await expect(page).toHaveTitle(/Jobs at Strava/)
 })
 
-function diffJobs(oldJobs, newJobs) {
-  return diff(oldJobs, newJobs, 'title')
-}
+test('Notion scraper', async ({ page }) => {
+  const COMPANY_NAME = 'Notion'
+  const GIST_FILE_NAME = 'notion.json'
+  const URL_TO_SCRAPE = 'https://www.notion.so/careers'
+  const SELECTOR = '.GreenhouseJobList_jobsList__l8jJG li'
 
-async function readGist(id) {
-  return await octokit.request(`GET /gists/${id}`, {
-    gist_id: id,
-    headers: {
-      'X-GitHub-Api-Version': '2022-11-28'
-    }
-  })
-}
+  await page.goto(URL_TO_SCRAPE)
 
-async function updateGist(id, companiesToUpdate) {
-  const files = companiesToUpdate.reduce((acc, current) => {
-    acc[current.fileName] = {
-      content: JSON.stringify(current.updatedJobs)
-    }
-    return acc
-  }, {})
-  return await octokit.request(`PATCH /gists/${id}`, {
-    gist_id: id,
-    files,
-    headers: {
-      'X-GitHub-Api-Version': '2022-11-28'
-    }
-  })
-}
+  const el = page.locator('#open-positions select')
+  const allEls = await el.all()
 
-async function sendNotification(emailAddress, templateId, companyName, jobs) {
-  return await courier.send({
-    message: {
-      to: {
-        email: emailAddress
-      },
-      template: templateId,
-      data: {
-        added: jobs.added,
-        removed: jobs.removed,
-        updated: jobs.updated,
-        same: jobs.same,
-        company: companyName
-      }
-    }
-  })
-}
+  await allEls[0]?.selectOption({ label: 'Dublin, Ireland' })
+  await allEls[1]?.selectOption({ label: 'Engineering' })
 
-async function sendNotificationRollup(emailAddress, templateId, jobsByCompany) {
-  return await courier.send({
-    message: {
-      to: {
-        email: emailAddress
-      },
-      template: templateId,
-      data: {
-        jobsByCompany
-      }
-    }
+  const jobs = await page.$$eval(SELECTOR, (jobs) => {
+    const data = []
+    jobs.forEach((j) => {
+      const href = j.querySelector('a').href
+      const title = j.querySelector('a p.GreenhouseJobList_jobTitle__dRBzj').innerText
+      data.push({ title, href })
+    })
+    return data
   })
-}
+
+  const oldJobs = gist.data.files[GIST_FILE_NAME]?.content || JSON.stringify([])
+
+  if (JSON.stringify(jobs) !== oldJobs) {
+    companiesToUpdate.push({
+      name: COMPANY_NAME,
+      detailedDiff: diffJobs(JSON.parse(oldJobs), jobs),
+      fileName: GIST_FILE_NAME,
+      updatedJobs: jobs
+    })
+  } else {
+    console.log(`No new ${COMPANY_NAME} jobs found 😞`)
+  }
+
+  await expect(page).toHaveTitle(/Careers at Notion | We're Hiring!/)
+})
