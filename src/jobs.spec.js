@@ -361,3 +361,38 @@ test('Etsy scraper', async ({ page }) => {
 
   await expect(page).toHaveTitle(/Search Page/)
 })
+
+test('Datadog scraper', async ({ page }) => {
+  const COMPANY_NAME = 'Datadog'
+  const GIST_FILE_NAME = 'datadog.json'
+  const URL_TO_SCRAPE =
+    'https://careers.datadoghq.com/dublin/?parent_department_Engineering%5B0%5D=Engineering'
+  const SELECTOR = '#hits li button a'
+
+  await page.goto(URL_TO_SCRAPE)
+
+  const jobs = await page.$$eval(SELECTOR, (jobs) => {
+    const data = []
+    jobs.forEach((j) => {
+      const href = j.href
+      const title = j.querySelector('.job-card-title h3').innerText
+      data.push({ title, href })
+    })
+    return data
+  })
+
+  const oldJobs = gist.data.files[GIST_FILE_NAME]?.content || JSON.stringify([])
+
+  if (JSON.stringify(jobs) !== oldJobs) {
+    companiesToUpdate.push({
+      name: COMPANY_NAME,
+      detailedDiff: diffJobs(JSON.parse(oldJobs), jobs),
+      fileName: GIST_FILE_NAME,
+      updatedJobs: jobs
+    })
+  } else {
+    console.log(`No new ${COMPANY_NAME} jobs found 😞`)
+  }
+
+  await expect(page).toHaveTitle(/Dublin | Datadog Careers/)
+})
