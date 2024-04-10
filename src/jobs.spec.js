@@ -396,3 +396,41 @@ test('Datadog scraper', async ({ page }) => {
 
   await expect(page).toHaveTitle(/Dublin | Datadog Careers/)
 })
+
+test('Algolia scraper', async ({ page }) => {
+  const COMPANY_NAME = 'Algolia'
+  const GIST_FILE_NAME = 'algolia.json'
+  const URL_TO_SCRAPE =
+    'https://www.algolia.com/careers/?PROD_algolia.com-career-page%5Bquery%5D=dublin'
+  const SELECTOR = '.ais-Highlight-nonHighlighted'
+
+  await page.goto(URL_TO_SCRAPE)
+
+  const jobs = await page.$$eval(SELECTOR, (jobs) => {
+    const data = []
+    jobs.forEach((j) => {
+      const title = j.innerText
+      // No href - each job button triggers a modal. Hardcoding to the main Dublin jobs page
+      data.push({
+        title,
+        href: 'https://www.algolia.com/careers/?PROD_algolia.com-career-page%5Bquery%5D=dublin'
+      })
+    })
+    return data
+  })
+
+  const oldJobs = gist.data.files[GIST_FILE_NAME]?.content || JSON.stringify([])
+
+  if (JSON.stringify(jobs) !== oldJobs) {
+    companiesToUpdate.push({
+      name: COMPANY_NAME,
+      detailedDiff: diffJobs(JSON.parse(oldJobs), jobs),
+      fileName: GIST_FILE_NAME,
+      updatedJobs: jobs
+    })
+  } else {
+    console.log(`No new ${COMPANY_NAME} jobs found 😞`)
+  }
+
+  await expect(page).toHaveTitle(/Careers & jobs at Algolia | Hiring worldwide | Algolia/)
+})

@@ -15,7 +15,7 @@ Scrapes data from the following company's careers pages:
 | Anthropic                                                 | 🚧     |
 | [Notion](https://www.notion.so/careers)                   | ✅     |
 | [Datadog](https://careers.datadoghq.com)                  | ✅     |
-| Algolia                                                   | 🚧     |
+| [Algolia](https://www.algolia.com/careers)                | ✅     |
 | [Etsy](https://careers.etsy.com/jobs/search?query=dublin) | ✅     |
 
 > [!IMPORTANT]
