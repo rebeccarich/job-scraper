@@ -145,20 +145,17 @@ test('Stripe scraper', async ({ page }) => {
 test('OpenAI scraper', async ({ page }) => {
   const COMPANY_NAME = 'OpenAI'
   const GIST_FILE_NAME = 'openai.json'
-  const URL_TO_SCRAPE = 'https://openai.com/careers/search'
-  const SELECTOR = 'ul[aria-label="All teams roles"] a.ui-link.relative.group.inline-block'
+  const URL_TO_SCRAPE = 'https://openai.com/careers/search?l=dublin-ireland'
+  const SELECTOR = 'a.break-words.shrink-1.max-w-full'
 
   await page.goto(URL_TO_SCRAPE)
 
   const jobs = await page.$$eval(SELECTOR, (jobs) => {
     const data = []
     jobs.forEach((j) => {
-      const title = j.querySelector('h3')?.innerHTML
-      const location = j.querySelector('span')?.innerText
+      const title = j.innerText
       const href = j.href
-      if (location?.includes('Dublin, Ireland')) {
-        data.push({ title, href })
-      }
+      data.push({ title, href })
     })
     return data
   })
@@ -176,7 +173,7 @@ test('OpenAI scraper', async ({ page }) => {
     console.log(`No new ${COMPANY_NAME} jobs found 😞`)
   }
 
-  await expect(page).toHaveTitle(/Careers at OpenAI/)
+  await expect(page).toHaveTitle(/OpenAI/)
 })
 
 test('Pinterest scraper', async ({ page }) => {
