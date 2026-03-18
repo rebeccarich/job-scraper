@@ -104,7 +104,7 @@ test('Squarespace scraper', async ({ page }) => {
     console.log(`No new ${COMPANY_NAME} jobs found 😞`)
   }
 
-  await expect(page).toHaveTitle(/Engineering Careers – Squarespace/)
+  await expect(page).toHaveTitle(/Engineering Careers — Squarespace/)
 })
 
 test('Stripe scraper', async ({ page }) => {
@@ -145,17 +145,26 @@ test('Stripe scraper', async ({ page }) => {
 test('OpenAI scraper', async ({ page }) => {
   const COMPANY_NAME = 'OpenAI'
   const GIST_FILE_NAME = 'openai.json'
-  const URL_TO_SCRAPE = 'https://openai.com/careers/search?l=dublin-ireland'
-  const SELECTOR = 'a.break-words.shrink-1.max-w-full'
+  const URL_TO_SCRAPE = 'https://jobs.ashbyhq.com/openai'
+  const SELECTOR = 'a[href*="/openai/"]'
 
   await page.goto(URL_TO_SCRAPE)
+
+  const locationSelect = page.getByLabel('Location')
+  const dublinOption = locationSelect.locator('option', { hasText: 'Dublin' })
+  const dublinValue = await dublinOption.getAttribute('value')
+  await locationSelect.selectOption(dublinValue)
+  await page.waitForTimeout(1000)
 
   const jobs = await page.$$eval(SELECTOR, (jobs) => {
     const data = []
     jobs.forEach((j) => {
-      const title = j.innerText
+      if (!j.checkVisibility()) return
+      const title = j.querySelector('h3')?.innerText
       const href = j.href
-      data.push({ title, href })
+      if (title) {
+        data.push({ title, href })
+      }
     })
     return data
   })
@@ -173,24 +182,27 @@ test('OpenAI scraper', async ({ page }) => {
     console.log(`No new ${COMPANY_NAME} jobs found 😞`)
   }
 
-  await expect(page).toHaveTitle(/OpenAI/)
+  await expect(page).toHaveTitle(/OpenAI Jobs/)
 })
 
 test('Pinterest scraper', async ({ page }) => {
   const COMPANY_NAME = 'Pinterest'
   const GIST_FILE_NAME = 'pinterest.json'
-  const URL_TO_SCRAPE =
-    'https://www.pinterestcareers.com/en/jobs/?search=&team=Engineering&location=Dublin&pagesize=200'
-  const SELECTOR = '#results .js-view-job'
+  const URL_TO_SCRAPE = 'https://job-boards.greenhouse.io/embed/job_board?for=pinterest'
+  const SELECTOR = 'table a[href*="pinterestcareers.com"]'
 
   await page.goto(URL_TO_SCRAPE)
 
   const jobs = await page.$$eval(SELECTOR, (jobs) => {
     const data = []
     jobs.forEach((j) => {
-      const title = j.innerText
+      const paragraphs = j.querySelectorAll('p')
+      const title = paragraphs[0]?.innerText
+      const location = paragraphs[1]?.innerText || ''
       const href = j.href
-      data.push({ title, href })
+      if (title && location.includes('Dublin')) {
+        data.push({ title, href })
+      }
     })
     return data
   })
@@ -208,7 +220,7 @@ test('Pinterest scraper', async ({ page }) => {
     console.log(`No new ${COMPANY_NAME} jobs found 😞`)
   }
 
-  await expect(page).toHaveTitle(/Discover opportunities at Pinterest | Pinterest Careers/)
+  await expect(page).toHaveTitle(/Jobs at Pinterest/)
 })
 
 test('Reddit scraper', async ({ page }) => {
@@ -246,43 +258,6 @@ test('Reddit scraper', async ({ page }) => {
   }
 
   await expect(page).toHaveTitle(/Jobs at Reddit/)
-})
-
-test('Strava scraper', async ({ page }) => {
-  const COMPANY_NAME = 'Strava'
-  const GIST_FILE_NAME = 'strava.json'
-  const URL_TO_SCRAPE = 'https://boards.greenhouse.io/strava'
-  const SELECTOR = '.opening'
-
-  await page.goto(URL_TO_SCRAPE)
-
-  const jobs = await page.$$eval(SELECTOR, (jobs) => {
-    const data = []
-    jobs.forEach((j) => {
-      const location = j.querySelector('span').innerText
-      const href = j.querySelector('a').href
-      const title = j.querySelector('a').innerText
-      if (location === 'Dublin') {
-        data.push({ title, href })
-      }
-    })
-    return data
-  })
-
-  const oldJobs = gist.data.files[GIST_FILE_NAME]?.content || JSON.stringify([])
-
-  if (JSON.stringify(jobs) !== oldJobs) {
-    companiesToUpdate.push({
-      name: COMPANY_NAME,
-      detailedDiff: diffJobs(JSON.parse(oldJobs), jobs),
-      fileName: GIST_FILE_NAME,
-      updatedJobs: jobs
-    })
-  } else {
-    console.log(`No new ${COMPANY_NAME} jobs found 😞`)
-  }
-
-  await expect(page).toHaveTitle(/Jobs at Strava/)
 })
 
 test('Anthropic scraper', async ({ page }) => {

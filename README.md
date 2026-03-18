@@ -11,7 +11,6 @@ Scrapes data from the following company's careers pages:
 | [OpenAI](https://www.openai.com/careers)                  | ✅     |
 | [Pinterest](https://www.pinterestcareers.com/)            | ✅     |
 | [Reddit](https://www.redditinc.com/careers)               | ✅     |
-| [Strava](https://www.strava.com/careers)                  | ✅     |
 | [Anthropic](https://www.anthropic.com/careers/jobs?office=4006509008) | ✅     |
 | [Notion](https://www.notion.so/careers)                   | ✅     |
 | [Datadog](https://careers.datadoghq.com)                  | ✅     |
