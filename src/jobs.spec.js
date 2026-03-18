@@ -285,6 +285,47 @@ test('Strava scraper', async ({ page }) => {
   await expect(page).toHaveTitle(/Jobs at Strava/)
 })
 
+test('Anthropic scraper', async ({ page }) => {
+  const COMPANY_NAME = 'Anthropic'
+  const GIST_FILE_NAME = 'anthropic.json'
+  const URL_TO_SCRAPE = 'https://www.anthropic.com/careers/jobs?office=4006509008'
+  const SELECTOR = 'a[href*="job-boards.greenhouse.io/anthropic/jobs"]'
+
+  await page.goto(URL_TO_SCRAPE)
+
+  const searchBox = page.getByPlaceholder('Search roles')
+  await searchBox.pressSequentially('software engineer')
+  await page.waitForTimeout(1000)
+
+  const jobs = await page.$$eval(SELECTOR, (jobs) => {
+    const data = []
+    jobs.forEach((j) => {
+      if (!j.checkVisibility()) return
+      const title = j.querySelector('p')?.innerText
+      const href = j.href
+      if (title) {
+        data.push({ title, href })
+      }
+    })
+    return data
+  })
+
+  const oldJobs = gist.data.files[GIST_FILE_NAME]?.content || JSON.stringify([])
+
+  if (JSON.stringify(jobs) !== oldJobs) {
+    companiesToUpdate.push({
+      name: COMPANY_NAME,
+      detailedDiff: diffJobs(JSON.parse(oldJobs), jobs),
+      fileName: GIST_FILE_NAME,
+      updatedJobs: jobs
+    })
+  } else {
+    console.log(`No new ${COMPANY_NAME} jobs found 😞`)
+  }
+
+  await expect(page).toHaveTitle(/Anthropic/)
+})
+
 test('Notion scraper', async ({ page }) => {
   const COMPANY_NAME = 'Notion'
   const GIST_FILE_NAME = 'notion.json'
