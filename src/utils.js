@@ -1,6 +1,6 @@
-import diff from 'diff-arrays-of-objects'
-import { CourierClient } from '@trycourier/courier'
-import { Octokit } from '@octokit/core'
+const diff = require('diff-arrays-of-objects')
+const { CourierClient } = require('@trycourier/courier')
+const { Octokit } = require('@octokit/core')
 
 const courier = new CourierClient({
   authorizationToken: process.env.COURIER_AUTH_TOKEN
@@ -10,11 +10,11 @@ const octokit = new Octokit({
   auth: process.env.GH_AUTH_TOKEN
 })
 
-export function diffJobs(oldJobs, newJobs) {
+function diffJobs(oldJobs, newJobs) {
   return diff(oldJobs, newJobs, 'title')
 }
 
-export async function readGist(id) {
+async function readGist(id) {
   return await octokit.request(`GET /gists/${id}`, {
     gist_id: id,
     headers: {
@@ -23,7 +23,7 @@ export async function readGist(id) {
   })
 }
 
-export async function updateGist(id, companiesToUpdate) {
+async function updateGist(id, companiesToUpdate) {
   const files = companiesToUpdate.reduce((acc, current) => {
     acc[current.fileName] = {
       content: JSON.stringify(current.updatedJobs)
@@ -39,7 +39,7 @@ export async function updateGist(id, companiesToUpdate) {
   })
 }
 
-export async function sendNotification(emailAddress, templateId, companyName, jobs) {
+async function sendNotification(emailAddress, templateId, companyName, jobs) {
   return await courier.send({
     message: {
       to: {
@@ -57,7 +57,7 @@ export async function sendNotification(emailAddress, templateId, companyName, jo
   })
 }
 
-export async function sendNotificationRollup(emailAddress, templateId, jobsByCompany) {
+async function sendNotificationRollup(emailAddress, templateId, jobsByCompany) {
   return await courier.send({
     message: {
       to: {
@@ -70,3 +70,5 @@ export async function sendNotificationRollup(emailAddress, templateId, jobsByCom
     }
   })
 }
+
+module.exports = { diffJobs, readGist, updateGist, sendNotification, sendNotificationRollup }
