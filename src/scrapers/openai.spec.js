@@ -10,7 +10,7 @@ test('OpenAI scraper', async ({ page }) => {
 
   await page.goto(URL_TO_SCRAPE)
 
-  const locationSelect = page.getByLabel('Location')
+  const locationSelect = page.getByLabel('Location', { exact: true })
   const dublinOption = locationSelect.locator('option', { hasText: 'Dublin' })
   const dublinValue = await dublinOption.getAttribute('value')
   await locationSelect.selectOption(dublinValue)
